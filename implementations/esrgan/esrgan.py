@@ -83,16 +83,37 @@ optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt
 
 Tensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.Tensor
 
-dataloader = DataLoader(
-    ImageDataset(config.clean_image_dir, config.noisy_image_dir, config.image_size),
-    batch_size=config.batch_size,
-    shuffle=True,
-    num_workers=config.num_workers,
-)
+# dataloader = DataLoader(
+#     ImageDataset(config.clean_image_dir, config.noisy_image_dir, config.image_size),
+#     batch_size=config.batch_size,
+#     shuffle=True,
+#     num_workers=config.num_workers,
+# )
+
+def load_dataset():
+    # Load train, test and valid datasets
+    train_datasets = ImageDataset(config.clean_image_dir, config.noisy_image_dir, config.image_size)
+
+    # Generator all dataloader
+    train_dataloader = DataLoader(train_datasets,
+                                  batch_size=config.batch_size,
+                                  shuffle=True,
+                                  num_workers=config.num_workers,
+                                  pin_memory=True,
+                                  drop_last=True,
+                                  persistent_workers=True)
+
+    # Place all data on the preprocessing data loader
+    train_prefetcher = CUDAPrefetcher(train_dataloader, config.device)
+
+    # return train_prefetcher, valid_prefetcher, test_prefetcher
+    return train_prefetcher
 
 # ----------
 #  Training
 # ----------
+
+dataloader = load_dataset()
 
 for epoch in range(opt.epoch, opt.n_epochs):
     for i, imgs in enumerate(dataloader):
