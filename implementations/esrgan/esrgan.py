@@ -28,21 +28,23 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
-os.makedirs("images/training", exist_ok=True)
-os.makedirs("saved_models", exist_ok=True)
+import config
+
+# os.makedirs("images/training", exist_ok=True)
+# os.makedirs("saved_models", exist_ok=True)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--epoch", type=int, default=0, help="epoch to start training from")
 parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
-parser.add_argument("--dataset_name", type=str, default="img_align_celeba", help="name of the dataset")
-parser.add_argument("--batch_size", type=int, default=4, help="size of the batches")
+# parser.add_argument("--dataset_name", type=str, default="img_align_celeba", help="name of the dataset")
+# parser.add_argument("--batch_size", type=int, default=4, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.9, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--decay_epoch", type=int, default=100, help="epoch from which to start lr decay")
-parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
-parser.add_argument("--hr_height", type=int, default=256, help="high res. image height")
-parser.add_argument("--hr_width", type=int, default=256, help="high res. image width")
+# parser.add_argument("--n_cpu", type=int, default=4, help="number of cpu threads to use during batch generation")
+# parser.add_argument("--hr_height", type=int, default=256, help="high res. image height")
+# parser.add_argument("--hr_width", type=int, default=256, help="high res. image width")
 parser.add_argument("--channels", type=int, default=3, help="number of image channels")
 parser.add_argument("--sample_interval", type=int, default=100, help="interval between saving image samples")
 parser.add_argument("--checkpoint_interval", type=int, default=5000, help="batch interval between model checkpoints")
@@ -55,7 +57,7 @@ print(opt)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-hr_shape = (opt.hr_height, opt.hr_width)
+hr_shape = (config.image_size, config.image_size)
 
 # Initialize generator and discriminator
 generator = GeneratorRRDB(opt.channels, filters=64, num_res_blocks=opt.residual_blocks).to(device)
@@ -70,10 +72,10 @@ criterion_GAN = torch.nn.BCEWithLogitsLoss().to(device)
 criterion_content = torch.nn.L1Loss().to(device)
 criterion_pixel = torch.nn.L1Loss().to(device)
 
-if opt.epoch != 0:
+if opt.epoch != 0 and config.pretrained_weight != '':
     # Load pretrained models
-    generator.load_state_dict(torch.load("saved_models/generator_%d.pth" % opt.epoch))
-    discriminator.load_state_dict(torch.load("saved_models/discriminator_%d.pth" % opt.epoch))
+    generator.load_state_dict(torch.load(os.path.join(config.pretrained_weight, f"generator_{opt.epoch}.pth")))
+    discriminator.load_state_dict(torch.load(os.path.join(config.pretrained_weight, f"discriminator_{opt.epoch}.pth")))
 
 # Optimizers
 optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
@@ -82,10 +84,10 @@ optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt
 Tensor = torch.cuda.FloatTensor if torch.cuda.is_available() else torch.Tensor
 
 dataloader = DataLoader(
-    ImageDataset("../../data/%s" % opt.dataset_name, hr_shape=hr_shape),
-    batch_size=opt.batch_size,
+    ImageDataset(config.clean_image_dir, config.noisy_image_dir, config.image_size),
+    batch_size=config.batch_size,
     shuffle=True,
-    num_workers=opt.n_cpu,
+    num_workers=config.num_workers,
 )
 
 # ----------
@@ -185,11 +187,12 @@ for epoch in range(opt.epoch, opt.n_epochs):
 
         if batches_done % opt.sample_interval == 0:
             # Save image grid with upsampled inputs and ESRGAN outputs
-            imgs_lr = nn.functional.interpolate(imgs_lr, scale_factor=4)
-            img_grid = denormalize(torch.cat((imgs_lr, gen_hr), -1))
-            save_image(img_grid, "images/training/%d.png" % batches_done, nrow=1, normalize=False)
+            # save to drive
+            save_image(make_grid(imgs_hr, nrow=8), os.path.join(config.save_image_dir, f'{batches_done}@Clean.jpg'))
+            save_image(make_grid(imgs_lr, nrow=8), os.path.join(config.save_image_dir, f'{batches_done}@Noisy.jpg'))
+            save_image(make_grid(gen_hr, nrow=8), os.path.join(config.save_image_dir, f'{batches_done}@Generated.jpg'))
 
         if batches_done % opt.checkpoint_interval == 0:
             # Save model checkpoints
-            torch.save(generator.state_dict(), "saved_models/generator_%d.pth" % epoch)
-            torch.save(discriminator.state_dict(), "saved_models/discriminator_%d.pth" %epoch)
+            torch.save(generator.state_dict(), os.path.join(config.save_model_weights, f"generator_{epoch}.pth"))
+            torch.save(discriminator.state_dict(), os.path.join(config.save_model_weights, f"discriminator_{epoch}.pth"))

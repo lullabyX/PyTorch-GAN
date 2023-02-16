@@ -68,14 +68,14 @@ class GeneratorRRDB(nn.Module):
         # Second conv layer post residual blocks
         self.conv2 = nn.Conv2d(filters, filters, kernel_size=3, stride=1, padding=1)
         # Upsampling layers
-        upsample_layers = []
-        for _ in range(num_upsample):
-            upsample_layers += [
-                nn.Conv2d(filters, filters * 4, kernel_size=3, stride=1, padding=1),
-                nn.LeakyReLU(),
-                nn.PixelShuffle(upscale_factor=2),
-            ]
-        self.upsampling = nn.Sequential(*upsample_layers)
+        # upsample_layers = []
+        # for _ in range(num_upsample):
+        #     upsample_layers += [
+        #         nn.Conv2d(filters, filters * 4, kernel_size=3, stride=1, padding=1),
+        #         nn.LeakyReLU(),
+        #         nn.PixelShuffle(upscale_factor=2),
+        #     ]
+        # self.upsampling = nn.Sequential(*upsample_layers)
         # Final output block
         self.conv3 = nn.Sequential(
             nn.Conv2d(filters, filters, kernel_size=3, stride=1, padding=1),
@@ -88,7 +88,7 @@ class GeneratorRRDB(nn.Module):
         out = self.res_blocks(out1)
         out2 = self.conv2(out)
         out = torch.add(out1, out2)
-        out = self.upsampling(out)
+        # out = self.upsampling(out)
         out = self.conv3(out)
         return out
 
