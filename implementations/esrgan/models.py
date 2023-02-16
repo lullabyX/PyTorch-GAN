@@ -58,7 +58,7 @@ class ResidualInResidualDenseBlock(nn.Module):
 
 
 class GeneratorRRDB(nn.Module):
-    def __init__(self, channels, filters=64, num_res_blocks=16, num_upsample=2):
+    def __init__(self, channels, filters=64, num_res_blocks=10, num_upsample=2):
         super(GeneratorRRDB, self).__init__()
 
         # First layer
