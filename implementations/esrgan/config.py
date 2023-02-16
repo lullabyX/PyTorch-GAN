@@ -71,7 +71,7 @@ pretrained_weight = ''
 # hyper params
 
 image_size = 128
-batch_size = 32
+batch_size = 16
 num_workers = 4
 
 
