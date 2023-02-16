@@ -1,4 +1,7 @@
 import os
+import torch
+
+device = torch.device("cuda", 0)
 
 # Experiment name, easy to save weights and log files
 save_model_weights = ''
