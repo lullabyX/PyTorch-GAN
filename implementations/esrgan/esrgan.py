@@ -143,8 +143,6 @@ for epoch in range(opt.epoch, opt.n_epochs):
         # Measure pixel-wise loss against ground truth
         loss_pixel = criterion_pixel(gen_hr, imgs_hr)
 
-        i = i + 1
-        imgs = dataloader.next()
 
         if batches_done < opt.warmup_batches:
             # Warm-up (pixel-wise loss only)
@@ -154,6 +152,8 @@ for epoch in range(opt.epoch, opt.n_epochs):
                 "[Epoch %d/%d] [Batch %d/%d] [G pixel: %f]"
                 % (epoch, opt.n_epochs, i, len(dataloader), loss_pixel.item())
             )
+            i = i + 1
+            imgs = dataloader.next()
             continue
 
         # Extract validity predictions from discriminator
@@ -224,4 +224,5 @@ for epoch in range(opt.epoch, opt.n_epochs):
             torch.save(generator.state_dict(), os.path.join(config.save_model_weights, f"generator_{epoch}.pth"))
             torch.save(discriminator.state_dict(), os.path.join(config.save_model_weights, f"discriminator_{epoch}.pth"))
 
-        
+        i = i + 1
+        imgs = dataloader.next()
