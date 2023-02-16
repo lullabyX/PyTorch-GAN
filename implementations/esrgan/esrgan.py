@@ -114,11 +114,14 @@ def load_dataset():
 # ----------
 
 dataloader = load_dataset()
+batches = len(dataloader)
 
 for epoch in range(opt.epoch, opt.n_epochs):
-    for i, imgs in enumerate(dataloader):
-
-        batches_done = epoch * len(dataloader) + i
+    dataloader.reset()
+    imgs = dataloader.next()
+    i = 1
+    while imgs != None:
+        batches_done = epoch * batches + i
 
         # Configure model input
         imgs_lr = Variable(imgs["lr"].type(Tensor))
@@ -217,3 +220,6 @@ for epoch in range(opt.epoch, opt.n_epochs):
             # Save model checkpoints
             torch.save(generator.state_dict(), os.path.join(config.save_model_weights, f"generator_{epoch}.pth"))
             torch.save(discriminator.state_dict(), os.path.join(config.save_model_weights, f"discriminator_{epoch}.pth"))
+
+        i = i + 1
+        imgs = dataloader.next()
