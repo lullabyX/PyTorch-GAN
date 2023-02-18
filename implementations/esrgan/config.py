@@ -92,6 +92,9 @@ while True:
 pretrained_D_weight = ''
 pretrained_G_weight = ''
 
+# print frequency in validation function
+valid_print_frequency = 10
+
 # hyper params
 
 image_size = 128
