@@ -371,11 +371,10 @@ for epoch in range(opt.epoch, opt.n_epochs):
             save_image(make_grid(imgs_lr, nrow=8), os.path.join(config.save_image_dir, f'{batches_done}@Noisy.jpg'))
             save_image(make_grid(gen_hr, nrow=8), os.path.join(config.save_image_dir, f'{batches_done}@Generated.jpg'))
 
-            torch.save(generator.state_dict(), os.path.join(config.save_model_weights, f"/batchSave/generator_{batches_done}.pth"))
-            torch.save(discriminator.state_dict(), os.path.join(config.save_model_weights, f"/batchSave/discriminator_{batches_done}.pth"))
+            torch.save(generator.state_dict(), os.path.join(config.save_model_weights, f"batch_generator_{batches_done}.pth"))
+            torch.save(discriminator.state_dict(), os.path.join(config.save_model_weights, f"batch_discriminator_{batches_done}.pth"))
 
             psnr, ssim = validate(generator, test_prefetcher, epoch, psnr_model, ssim_model, "Test")
-            print("\n")
 
             # Automatically save the model with the highest index
             is_best = psnr > best_psnr and ssim > best_ssim
