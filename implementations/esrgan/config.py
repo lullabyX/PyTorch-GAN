@@ -89,8 +89,8 @@ while True:
     
 
 # location if pretrained model
-pretrained_D_weight = '/content/drive/MyDrive/RabbiThesis/Train/ESRGAN/trainV1/SavedModel/discriminator_0.pth'
-pretrained_G_weight = '/content/drive/MyDrive/RabbiThesis/Train/ESRGAN/trainV1/SavedModel/generator_0.pth'
+pretrained_D_weight = ''
+pretrained_G_weight = ''
 
 # print frequency in validation function
 valid_print_frequency = 10
