@@ -1,7 +1,11 @@
 import os
+
 import torch
 
 device = torch.device("cuda", 0)
+
+upscale_factor = 1
+only_test_y_channel = False
 
 # Experiment name, easy to save weights and log files
 save_model_weights = ''
@@ -37,6 +41,25 @@ while True:
         continue;
     break
 
+# validation image dir
+test_lr_image_dir = "./val_A/"
+test_hr_image_dir = "./val_B/"
+while True: 
+    if not os.path.exists(test_hr_image_dir):
+        print('Validation CLEAN Image Directory Not Found')
+        print('Enter directory for validation CLEAN image: ')
+        test_hr_image_dir = input()
+        continue;
+    break
+
+while True: 
+    if not os.path.exists(test_lr_image_dir):
+        print('Validation NOISY Image Directory Not Found')
+        print('Enter directory for validation NOISY image: ')
+        test_lr_image_dir = input()
+        continue;
+    break
+
 
 # Check if noisy images needs to be generated
 print('Do you want to create noisy images on the fly?(yes/no): ')
@@ -66,12 +89,13 @@ while True:
     
 
 # location if pretrained model
-pretrained_weight = ''
+pretrained_D_weight = ''
+pretrained_G_weight = ''
 
 # hyper params
 
 image_size = 128
-batch_size = 16
+batch_size = 4
 num_workers = 4
 
 

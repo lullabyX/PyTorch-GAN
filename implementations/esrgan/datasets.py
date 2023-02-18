@@ -79,6 +79,65 @@ class ImageDataset(Dataset):
     def __len__(self):
         return len(self.image_file_names)
     
+class TestImageDataset(Dataset):
+    """Define Test dataset loading methods.
+
+    Args:
+        test_lr_image_dir (str): Test dataset address for low resolution image dir.
+        test_hr_image_dir (str): Test dataset address for high resolution image dir.
+    """
+
+    def __init__(self, test_lr_image_dir, test_hr_image_dir, image_size:int = 32) -> None:
+        super(TestImageDataset, self).__init__()
+        # Get all image file names in folder
+        self.clean_image_file_names = [image_file_name for image_file_name in os.listdir(test_hr_image_dir)]
+        self.noisy_image_file_names = [image_file_name for image_file_name in os.listdir(test_lr_image_dir)]
+        self.clean_image_names = [os.path.join(test_hr_image_dir, image_file_name) for image_file_name in self.clean_image_file_names]
+        self.noisy_image_names = [os.path.join(test_lr_image_dir, image_file_name) for image_file_name in self.clean_image_file_names]
+        # Specify the high-resolution image size, with equal length and width
+        self.image_size = image_size
+        # # How many times the high-resolution image is the low-resolution image
+        # self.upscale_factor = upscale_factor
+        # # Load training dataset or test dataset
+        # self.mode = mode
+
+    def __getitem__(self, batch_index: int) -> [torch.Tensor, torch.Tensor]:
+        # Read a batch of image data
+        clean_image = cv2.imread(self.clean_image_names[batch_index], cv2.IMREAD_UNCHANGED).astype(np.float32) / 255.
+        
+        if config.generate_noisy == 'no':
+            noisy_image = cv2.imread(self.noisy_image_names[batch_index], cv2.IMREAD_UNCHANGED).astype(np.float32) / 255.
+
+        if config.generate_noisy == 'no':
+            lr_image = cv2.cvtColor(noisy_image, cv2.COLOR_BGR2RGB)
+        hr_image = cv2.cvtColor(clean_image, cv2.COLOR_BGR2RGB)
+
+        # Resize image
+        if config.generate_noisy == 'no':
+            lr_image = cv2.resize(lr_image, (self.image_size, self.image_size), interpolation=cv2.INTER_AREA)
+        hr_image = cv2.resize(hr_image, (self.image_size, self.image_size), interpolation=cv2.INTER_AREA)
+
+        # Add some random noise
+        if config.generate_art_noise == 'yes':
+            if config.generate_noisy == 'no':
+                gauss_img = random_noise(lr_image, mode='gaussian', mean=0, var=0.0005, clip=True)
+            else:
+                gauss_img = random_noise(hr_image, mode='gaussian', mean=0, var=0.0005, clip=True)
+
+            # add S&P noise only for black and white image
+            # salt_gauss_img = torch.tensor(random_noise(gauss_img, mode='s&p', salt_vs_pepper=0.5, amount=0.0005, clip=True))
+            lr_image = random_noise(gauss_img, mode='speckle', mean=0, var=0.0005,  clip=True).astype(np.float32)
+
+        # Convert image data into Tensor stream format (PyTorch).
+        # Note: The range of input and output is between [0, 1]
+        lr_tensor = imgproc.image_to_tensor(lr_image, False, False)
+        hr_tensor = imgproc.image_to_tensor(hr_image, False, False)
+
+        return {"lr": lr_tensor, "hr": hr_tensor}
+
+    def __len__(self) -> int:
+        return len(self.clean_image_file_names)
+    
 
 class PrefetchGenerator(threading.Thread):
     """A fast data prefetch generator.
