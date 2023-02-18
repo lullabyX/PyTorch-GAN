@@ -350,7 +350,7 @@ for epoch in range(opt.epoch, opt.n_epochs):
         # --------------
 
         print(
-            "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f, content: %f, adv: %f, pixel: %f] [PSNR: %f, SSIM: %f]"
+            "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f, content: %f, adv: %f, pixel: %f]"
             % (
                 epoch,
                 opt.n_epochs,
@@ -360,9 +360,7 @@ for epoch in range(opt.epoch, opt.n_epochs):
                 loss_G.item(),
                 loss_content.item(),
                 loss_GAN.item(),
-                loss_pixel.item(),
-                psnr,
-                ssim
+                loss_pixel.item()
             )
         )
 
