@@ -181,12 +181,8 @@ def validate(
 
     # print metrics
     progress.display_summary()
-
-    if mode == "Valid" or mode == "Test":
-        print(f"{mode}/PSNR", psnres.avg, epoch + 1)
-        print.add_scalar(f"{mode}/SSIM", ssimes.avg, epoch + 1)
-    else:
-        raise ValueError("Unsupported mode, please use `Valid` or `Test`.")
+    
+    print(f"PSNR: {psnres.avg} <> SSIM: {ssimes.avg}\n")
 
     return psnres.avg, ssimes.avg
 
