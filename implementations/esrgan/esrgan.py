@@ -308,14 +308,6 @@ for epoch in range(opt.epoch, opt.n_epochs):
                 imgs = dataloader.next()
                 continue
 
-        psnr, ssim = validate(generator, test_prefetcher, epoch, psnr_model, ssim_model, "Test")
-        print("\n")
-
-        # Automatically save the model with the highest index
-        is_best = psnr > best_psnr and ssim > best_ssim
-        best_psnr = max(psnr, best_psnr)
-        best_ssim = max(ssim, best_ssim)
-
         # Extract validity predictions from discriminator
         pred_real = discriminator(imgs_hr).detach()
         pred_fake = discriminator(gen_hr)
@@ -381,17 +373,30 @@ for epoch in range(opt.epoch, opt.n_epochs):
             save_image(make_grid(imgs_lr, nrow=8), os.path.join(config.save_image_dir, f'{batches_done}@Noisy.jpg'))
             save_image(make_grid(gen_hr, nrow=8), os.path.join(config.save_image_dir, f'{batches_done}@Generated.jpg'))
 
+            torch.save(generator.state_dict(), os.path.join(config.save_model_weights, f"/batchSave/generator_{batches_done}.pth"))
+            torch.save(discriminator.state_dict(), os.path.join(config.save_model_weights, f"/batchSave/discriminator_{batches_done}.pth"))
+
+            psnr, ssim = validate(generator, test_prefetcher, epoch, psnr_model, ssim_model, "Test")
+            print("\n")
+
+            # Automatically save the model with the highest index
+            is_best = psnr > best_psnr and ssim > best_ssim
+            best_psnr = max(psnr, best_psnr)
+            best_ssim = max(ssim, best_ssim)
+
+            if is_best:
+                # Save model checkpoints
+                torch.save(generator.state_dict(), os.path.join(config.save_model_weights, f"best_generator.pth"))
+                torch.save(discriminator.state_dict(), os.path.join(config.save_model_weights, f"best_discriminator.pth"))
+                with open(os.path.join(config.save_model_weights, f"performance.txt"), 'w') as f:
+                    f.write(f"best_psnr: {best_psnr}\nbest_ssim: {best_ssim}")
+
         if batches_done % opt.checkpoint_interval == 0:
             # Save model checkpoints
             torch.save(generator.state_dict(), os.path.join(config.save_model_weights, f"generator_{epoch}.pth"))
             torch.save(discriminator.state_dict(), os.path.join(config.save_model_weights, f"discriminator_{epoch}.pth"))
         
-        if is_best:
-            # Save model checkpoints
-            torch.save(generator.state_dict(), os.path.join(config.save_model_weights, f"best_generator.pth"))
-            torch.save(discriminator.state_dict(), os.path.join(config.save_model_weights, f"best_discriminator.pth"))
-            with open(os.path.join(config.save_model_weights, f"performance.txt"), 'w') as f:
-                f.write(f"best_psnr: {best_psnr}\nbest_ssim: {best_ssim}")
+        
 
         i = i + 1
         imgs = dataloader.next()
